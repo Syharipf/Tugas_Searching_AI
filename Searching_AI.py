@@ -28,7 +28,7 @@ def initialize_population(pop_size, chrom_length):
     return [random_chromosome(chrom_length) for _ in range(pop_size)]
 
 # ====== SELEKSI ORANGTUA (ROULETTE WHEEL) DENGAN INDEKS ======
-def select_parents_with_index(population, fitnesses):
+def select_parent_with_index(population, fitnesses):
     total_fit = sum(1 / (f + 1e-6) for f in fitnesses)
     pick = random.uniform(0, total_fit)
     current = 0
@@ -81,8 +81,13 @@ def genetic_algorithm(pop_size, chrom_length, gen_max, pc, pm, domain_min, domai
 
         new_population = []
         while len(new_population) < pop_size:
-            idx1, parent1 = select_parents_with_index(population, fitnesses)
-            idx2, parent2 = select_parents_with_index(population, fitnesses)
+            idx1, parent1 = select_parent_with_index(population, fitnesses)
+            
+            # Pilih parent2 yang tidak sama dengan parent1
+            idx2 = idx1
+            while idx2 == idx1:
+                idx2, parent2 = select_parent_with_index(population, fitnesses)
+
             print(f"\n\nSelected Parents:")
             print(f" Parent 1 (Individu {idx1+1}): {parent1}")
             print(f" Parent 2 (Individu {idx2+1}): {parent2}")
@@ -116,7 +121,7 @@ def genetic_algorithm(pop_size, chrom_length, gen_max, pc, pm, domain_min, domai
 if __name__ == "__main__":
     print("=== Parameter Algoritma Genetika ===")
     pop_size = int(input("Masukkan ukuran populasi: "))
-    chrom_length = 32  # Tetap 32 bit (16 bit untuk x1, 16 bit untuk x2)
+    chrom_length = 32  # Tetap 32 bit
     gen_max = int(input("Masukkan jumlah generasi: "))
     pc = float(input("Masukkan probabilitas crossover (0-1): "))
     pm = float(input("Masukkan probabilitas mutasi (0-1): "))
