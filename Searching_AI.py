@@ -15,9 +15,10 @@ def decode(chromosome, domain_min, domain_max):
 def fitness(x1, x2):
     try:
         value = -(math.sin(x1) * math.cos(x2) * math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1 ** 2)))
-    except:
-        value = float('inf')
-    return value
+        return value
+    except (ValueError, ZeroDivisionError, OverflowError, Exception) as e:
+        print(f"Error in fitness calculation: {e}")
+        return float('inf')  # Jika ada kesalahan, kembalikan fitness sangat besar (penalti)
 
 # ====== RANDOM KROMOSOM ======
 def random_chromosome(chrom_length):
@@ -29,6 +30,8 @@ def initialize_population(pop_size, chrom_length):
 
 # ====== SELEKSI ORANGTUA (ROULETTE WHEEL) DENGAN INDEKS ======
 def select_parent_with_index(population, fitnesses):
+    # Pastikan fitness tidak ada yang invalid (float('inf'))
+    fitnesses = [f if f != float('inf') else 1e-6 for f in fitnesses]
     total_fit = sum(1 / (f + 1e-6) for f in fitnesses)
     pick = random.uniform(0, total_fit)
     current = 0
@@ -64,15 +67,9 @@ def genetic_algorithm(pop_size, chrom_length, gen_max, pc, pm, domain_min, domai
     best_chrom = None
     best_fit = float('inf')
 
-    for gen in range(gen_max):
-        print(f"\n=== Generasi {gen} ===")
+    for gen in range(1, gen_max + 1):  # Perulangan generasi
         decoded = [decode(chrom, domain_min, domain_max) for chrom in population]
         fitnesses = [fitness(x1, x2) for x1, x2 in decoded]
-
-        print("\nPopulasi dan Fitness:")
-        for i, (chrom, fit) in enumerate(zip(population, fitnesses)):
-            x1, x2 = decode(chrom, domain_min, domain_max)
-            print(f" Individu {i+1}: {chrom} | x1 = {x1:.4f}, x2 = {x2:.4f}, Fitness = {fit:.6f}")
 
         for chrom, fit in zip(population, fitnesses):
             if fit < best_fit:
@@ -88,20 +85,9 @@ def genetic_algorithm(pop_size, chrom_length, gen_max, pc, pm, domain_min, domai
             while idx2 == idx1:
                 idx2, parent2 = select_parent_with_index(population, fitnesses)
 
-            print(f"\n\nSelected Parents:")
-            print(f" Parent 1 (Individu {idx1+1}): {parent1}")
-            print(f" Parent 2 (Individu {idx2+1}): {parent2}")
-
             child1, child2 = crossover(parent1, parent2, pc)
-            print(f"\n After Crossover:")
-            print(f" Child 1: {child1}")
-            print(f" Child 2: {child2}")
-
             child1 = mutate(child1, pm)
             child2 = mutate(child2, pm)
-            print(f"\n After Mutation:")
-            print(f" Child 1: {child1}")
-            print(f" Child 2: {child2}")
 
             new_population.append(child1)
             if len(new_population) < pop_size:
@@ -128,4 +114,8 @@ if __name__ == "__main__":
     domain_min = -10
     domain_max = 10
 
-    genetic_algorithm(pop_size, chrom_length, gen_max, pc, pm, domain_min, domain_max)
+    # Pastikan inputan yang besar tidak menyebabkan masalah performa
+    if pop_size <= 0 or gen_max <= 0:
+        print("Ukuran populasi dan jumlah generasi harus lebih dari 0.")
+    else:
+        genetic_algorithm(pop_size, chrom_length, gen_max, pc, pm, domain_min, domain_max)
